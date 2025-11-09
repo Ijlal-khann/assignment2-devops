@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend-ci:
+    image: node:18-alpine
+    container_name: web-backend-ci
+    working_dir: /app
+    volumes:
+      # Mounts your local code directly into the container
+      - ./web-project-backend:/app
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      MONGO_URI: mongodb://mongo-ci:27017/my-web-app-db
+      JWT_SECRET: abc123
+    ports:
+      # Use different host port (8081)
+      - "8081:8080"
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - mongo-ci
+
+  frontend-ci:
+    image: node:18-alpine
+    container_name: web-frontend-ci
+    working_dir: /app
+    volumes:
+      # Mounts your local code directly into the container
+      - ./web-project-frontend:/app
+    ports:
+      # Use different host port (3000) for Vite
+      - "3000:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    depends_on:
+      - backend-ci
+
+  mongo-ci:
+    image: mongo:latest
+    container_name: web-database-ci
+    ports:
+      # Use different host port (27018)
+      - "27018:27017"
+    volumes:
+      - mongo-data-ci:/data/db
+
+volumes:
+  mongo-data-ci:
